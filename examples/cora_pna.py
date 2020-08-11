@@ -1,23 +1,16 @@
 import os.path as osp
 import sys
-from datetime import time
 
-import torch
-import torch.nn.functional as F
 from torch_geometric.datasets import Planetoid
 import torch_geometric.transforms as T
-from torch_geometric.nn import SplineConv
-from torch_geometric.nn import PNAConv, global_add_pool
+
 
 import torch
 import torch.nn.functional as F
-from torch.nn import ModuleList, Embedding
-from torch.nn import Sequential, ReLU, Linear, Softmax, LogSoftmax
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.nn import ModuleList
+from torch.nn import Sequential, ReLU, Linear, LogSoftmax
 from torch_geometric.utils import degree
-from torch_geometric.datasets import ZINC
-from torch_geometric.data import DataLoader
-from torch_geometric.nn import PNAConv, global_add_pool
+from torch_geometric.nn import PNAConv
 import argparse, numpy as np, time
 
 parser = argparse.ArgumentParser()
