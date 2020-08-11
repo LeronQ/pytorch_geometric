@@ -65,7 +65,7 @@ class Net(torch.nn.Module):
             self.convs.append(conv)
 
         gr = []
-        g = list(map(int, np.ceil(np.geomspace(args.hidden, dataset.num_classes, args.mlp_layers + 1))))
+        g = list(map(int, (np.geomspace(args.hidden, dataset.num_classes, args.mlp_layers + 1))))
         for i in range(args.mlp_layers):
             gr.append(Linear(g[i], g[i + 1]))
             gr.append(LogSoftmax() if i == args.mlp_layers-1 else ReLU())
