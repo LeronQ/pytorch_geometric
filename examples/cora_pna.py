@@ -7,13 +7,14 @@ import torch_geometric.transforms as T
 import torch
 import torch.nn.functional as F
 from torch.nn import ModuleList
-from torch.nn import Sequential, ReLU, Linear, LogSoftmax
+from torch.nn import Sequential, ReLU, Linear, LogSoftmax, Dropout
 from torch_geometric.utils import degree
 from torch_geometric.nn import PNAConv
 import argparse, numpy as np, time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, help='Number of epochs.', default=1000)
+parser.add_argument('--dropout', type=float, help='Dropout.', default=0.2)
 parser.add_argument('--patience', type=int, help='Number of epochs patience', default=1000)
 parser.add_argument('--print_every', type=int, help='Print every.', default=100)
 parser.add_argument('--weight_decay', type=float, help="Please give a value for weight_decay", default=5e-3)
@@ -49,7 +50,7 @@ class Net(torch.nn.Module):
 
         aggregators = ['mean', 'min', 'max', 'std']
         scalers = ['identity', 'amplification', 'attenuation']
-
+        self.dropout = args.dropout
         self.convs = ModuleList()
         self.convs.append(PNAConv(in_channels=dataset.num_features, out_channels=args.hidden,
                                   aggregators=aggregators, scalers=scalers, deg=deg,
@@ -70,14 +71,18 @@ class Net(torch.nn.Module):
         g[-1] = dataset.num_classes
         for i in range(args.mlp_layers):
             gr.append(Linear(g[i], g[i + 1]))
+            if i<args.mlp_layers-1:
+                gr.append(Dropout(p=self.dropout))
             gr.append(LogSoftmax() if i == args.mlp_layers - 1 else ReLU())
 
         self.mlp = Sequential(*gr)
 
     def forward(self, x, edge_index, edge_attr):
-
+        x = F.dropout(x, self.dropout, training=self.training)
         for conv in self.convs:
             x = F.relu(conv(x, edge_index, edge_attr))
+            x = F.dropout(x, self.dropout, training=self.training)
+
         return self.mlp(x)
 
 
