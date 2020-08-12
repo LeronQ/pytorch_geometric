@@ -15,7 +15,7 @@ import argparse, numpy as np, time
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, help='Number of epochs.', default=1000)
 parser.add_argument('--dropout', type=float, help='Dropout.', default=0.2)
-parser.add_argument('--patience', type=int, help='Number of epochs patience', default=1000)
+parser.add_argument('--patience', type=float, help='Number of epochs patience', default=1000)
 parser.add_argument('--print_every', type=int, help='Print every.', default=100)
 parser.add_argument('--weight_decay', type=float, help="Please give a value for weight_decay", default=5e-3)
 parser.add_argument('--lr', type=float, help="Please give a value for init_lr", default=0.001)
@@ -51,6 +51,7 @@ class Net(torch.nn.Module):
         aggregators = ['mean', 'min', 'max', 'std']
         scalers = ['identity', 'amplification', 'attenuation']
         self.dropout = args.dropout
+        self.patience = args.patience
         self.convs = ModuleList()
         self.convs.append(PNAConv(in_channels=dataset.num_features, out_channels=args.hidden,
                                   aggregators=aggregators, scalers=scalers, deg=deg,
