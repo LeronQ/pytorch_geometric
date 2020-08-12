@@ -4,7 +4,6 @@ import sys
 from torch_geometric.datasets import Planetoid
 import torch_geometric.transforms as T
 
-
 import torch
 import torch.nn.functional as F
 from torch.nn import ModuleList
@@ -15,6 +14,7 @@ import argparse, numpy as np, time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, help='Number of epochs.', default=1000)
+parser.add_argument('--patience', type=int, help='Number of epochs patience', default=1000)
 parser.add_argument('--print_every', type=int, help='Print every.', default=100)
 parser.add_argument('--weight_decay', type=float, help="Please give a value for weight_decay", default=5e-3)
 parser.add_argument('--lr', type=float, help="Please give a value for init_lr", default=0.001)
@@ -70,7 +70,7 @@ class Net(torch.nn.Module):
         g[-1] = dataset.num_classes
         for i in range(args.mlp_layers):
             gr.append(Linear(g[i], g[i + 1]))
-            gr.append(LogSoftmax() if i == args.mlp_layers-1 else ReLU())
+            gr.append(LogSoftmax() if i == args.mlp_layers - 1 else ReLU())
 
         self.mlp = Sequential(*gr)
 
@@ -105,13 +105,29 @@ def test():
         accs.append(acc * 100)
     return accs
 
+
 sys.stdout.flush()
 
 tic = time.time()
+bad_counter = 0
+best_loss = (10000, None, 10000, None)
 for epoch in range(1, args.epochs + 1):
     train()
-    if epoch%args.print_every == 0:
+    losses = test()
+    if losses[0] < best_loss[0]:
+        best_loss = losses
+        bad_counter = 0
+    else:
+        bad_counter += 1
+    if bad_counter == args.patience:
+        print('Early stop at epoch', epoch)
+        break
+    if epoch % args.print_every == 0:
         log = 'Epoch: {:04d} , Train: loss: {:.4f} acc: {:02.2f}%, Test: loss: {:.4f} acc: {:02.2f}% {:01.2}s/epoch'
-        print(log.format(epoch, *test(), (time.time()-tic)/epoch))
+        print(log.format(epoch, *losses, (time.time() - tic) / epoch))
         sys.stdout.flush()
 
+print("Summary:")
+log = 'Epoch: {:04d} , Train: loss: {:.4f} acc: {:02.2f}%, Test: loss: {:.4f} acc: {:02.2f}% {:01.2}s/epoch'
+print(log.format(epoch, *best_loss, (time.time() - tic) / epoch))
+sys.stdout.flush()
